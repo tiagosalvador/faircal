@@ -26,7 +26,9 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
         embeddings, subgroup_embeddings, id_embeddings = collect_embeddings_rfw_agenda(feature, db_fold['cal'])
     elif 'bfw' in dataset_name:
         embeddings, subgroup_embeddings, id_embeddings = collect_embeddings_bfw_agenda(feature, db_fold['cal'])
-    
+    elif 'ijbc' in dataset_name:
+        embeddings, subgroup_embeddings, id_embeddings = collect_embeddings_ijbc_agenda(feature, db_fold['cal'])
+
     
     subgroup_embeddings = pd.Series(subgroup_embeddings, dtype="category").cat.codes.values
     embeddings_train, embeddings_test, id_train, id_test, subgroup_train, subgroup_test \
@@ -64,7 +66,6 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
 
     optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-3)
     ## STAGE 1 ##  
-    print(f"STAGE 1")
     for epoch in tqdm(range(epochs_stage1)):
         if torch.cuda.is_available():
             modelM.train()
@@ -89,7 +90,6 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
             if torch.cuda.is_available():
                 modelE = NeuralNetworkE(n_subgroup).cuda()
             optimizer_stage2 = optim.Adam(modelE.parameters(), lr=1e-3)
-#             print(f"STAGE 2")
             for epoch in range(epochs_stage2):
                 for batch, (X, y_id, y_subgroup) in enumerate(train_dataloader):
                     if torch.cuda.is_available():
@@ -106,7 +106,6 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
 
         ## STAGE 3 ##
         optimizer_stage3 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-3)
-    #     print(f"STAGE 3")
         for epoch in range(epochs_stage3):
             for batch, (X, y_id, y_subgroup) in enumerate(train_dataloader):
                 if torch.cuda.is_available():
@@ -132,7 +131,6 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
         ## STAGE 4 ##
 
         optimizer_stage2 = optim.Adam(modelE.parameters(), lr=1e-3)
-    #     print(f"STAGE 4")
         for epoch in range(epochs_stage4):
             modelM.eval()
             modelE.eval()
@@ -152,7 +150,6 @@ def agenda(dataset_name, feature, db_fold, nbins, calibration_method):
                     correct += (prob.argmax(1) == y_subgroup).type(torch.float).sum().item()
             test_loss /= size
             correct /= size
-    #         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f}")
 
             if correct > 0.9:
                 break

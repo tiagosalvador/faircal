@@ -76,7 +76,7 @@ def ftc(dataset_name, feature, db_fold, nbins, calibration_method):
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loop(train_dataloader, model, loss_fn, optimizer, dataset_name)
-#         _, _ = test_loop(evaluate_test_dataloader, model, loss_fn)
+         _, _ = test_loop(evaluate_test_dataloader, model, loss_fn)
     print("Done!")
     scores_cal, ground_truth_cal = test_loop(evaluate_train_dataloader, model, loss_fn)
     scores_cal = scores_cal[:, 1].numpy().reshape(-1)
