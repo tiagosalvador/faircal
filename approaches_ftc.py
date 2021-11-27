@@ -26,7 +26,6 @@ def ftc(dataset_name, feature, db_fold, nbins, calibration_method):
         r = collect_error_embeddings_bfw(feature, db_fold['cal'])
         batch_size = 200
     elif 'ijbc' in dataset_name:
-	# given that IJB-C is a larger dataset we increased the batch size
         r = collect_error_embeddings_ijbc(feature, db_fold['cal'])
         batch_size = 200
 
