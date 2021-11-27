@@ -28,7 +28,7 @@ def ftc(dataset_name, feature, db_fold, nbins, calibration_method):
     elif 'ijbc' in dataset_name:
 	# given that IJB-C is a larger dataset we increased the batch size
         r = collect_error_embeddings_ijbc(feature, db_fold['cal'])
-        batch_size = 2048
+        batch_size = 200
 
     error_embeddings = r[0]
     ground_truth = r[1]
@@ -68,10 +68,7 @@ def ftc(dataset_name, feature, db_fold, nbins, calibration_method):
     loss_fn = nn.CrossEntropyLoss()
     # Initialize optimizer
     optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-3)
-    if 'ijbc' in dataset_name:
-        epochs = 10
-    else:
-        epochs = 50
+    epochs = 50
         
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
@@ -191,7 +188,6 @@ def collect_error_embeddings_bfw(feature, db_cal):
 
 def collect_error_embeddings_ijbc(feature, db_cal):
     # collect embeddings of all the images in the calibration set
-#     print('Loading IJB-C')
     ground_truth = np.array(db_cal['same'].astype(bool))
     subgroups_left = np.array(db_cal['att1'])
     subgroups_right = np.array(db_cal['att2'])
@@ -199,16 +195,12 @@ def collect_error_embeddings_ijbc(feature, db_cal):
     npairs = len(db_cal)
     error_embeddings = torch.zeros((npairs, temp.shape[1]))
     start = 0
-#     print(npairs//10000+1)
     for i in range(npairs//10000+1):
-#         print(i)
         if start>npairs:
             break
         end = min(start+10000,npairs)
         aux_left = torch.from_numpy(temp[db_cal['MATRIX_ID_1'][start:end]])
-#         print('aux_left')
         aux_right = torch.from_numpy(temp[db_cal['MATRIX_ID_2'][start:end]])
-#         print('aux_right')
         error_embeddings[start:end] = torch.abs(aux_left-aux_right)
     return error_embeddings, ground_truth, subgroups_left, subgroups_right
 
