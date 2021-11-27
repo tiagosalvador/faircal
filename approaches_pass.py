@@ -69,13 +69,11 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
     modelM = NeuralNetworkM().cuda()
     modelC = NeuralNetworkC(n_id).cuda()
 
-    optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-3)
     ## STAGE 1 ##  
-    print(f"STAGE 1")
     # Initialize 
     modelM = NeuralNetworkM().cuda()
     modelC = NeuralNetworkC(n_id).cuda()
-    optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-3)
+    optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-2)
 
     for epoch in tqdm(range(epochs_stage1)):
         if torch.cuda.is_available():
@@ -97,8 +95,6 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
             optimizer_stage1.zero_grad()
             loss.backward()
             optimizer_stage1.step()
-    #     if epoch % 10 == 0:
-    #         tqdm.write('Epoch %d: Loss: %1.2f'%(epoch,sum(loss_list)/len(loss_list)))
 
 
     for i in tqdm(range(Nep)):
@@ -113,7 +109,6 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
             for k in range(1,K):
                 optimizer_stage2_parameters += list(modelE[k].parameters())
             optimizer_stage2 = optim.Adam(optimizer_stage2_parameters, lr=1e-3)
-            print(f"STAGE 2")
             for epoch in tqdm(range(epochs_stage2)):
                 loss_list = []
                 for batch, (X, y_id, y_subgroup) in enumerate(train_dataloader):
@@ -131,12 +126,9 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
                     optimizer_stage2.zero_grad()
                     loss.backward()
                     optimizer_stage2.step()
-    #             if epoch % 10 == 0:
-    #                 tqdm.write('Epoch %d: Loss: %1.2f'%(epoch,sum(loss_list)/len(loss_list)))
 
         ## STAGE 3 ##
         optimizer_stage3 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-4)
-        #     print(f"STAGE 3")
         for epoch in range(epochs_stage3):
             loss_list = []
             for batch, (X, y_id, y_subgroup) in enumerate(train_dataloader):
@@ -161,13 +153,10 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
                 optimizer_stage3.zero_grad()
                 loss.backward()
                 optimizer_stage3.step()
-    #         if epoch % 1 == 0:
-    #             tqdm.write('Epoch %d: Loss: %1.2f'%(epoch,sum(loss_list)/len(loss_list)))
 
         ## STAGE 4 ##
         k = i % K
         optimizer_stage2 = optim.Adam(modelE[k].parameters(), lr=1e-3)
-    #     print(f"STAGE 4")
         for epoch in range(epochs_stage4):
             modelM.eval()
             modelE[k].eval()
@@ -188,7 +177,6 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
                     correct += (prob.argmax(1) == y_subgroup).type(torch.float).sum().item()
             test_loss /= size
             correct /= size
-    #         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f}")
             modelM.train()
             modelE[k].train()
             if correct > 0.95:
@@ -210,7 +198,6 @@ def pass_att(dataset_name, feature, db_fold, nbins, calibration_method):
     fair_scores = {}
     ground_truth = {}
     for dataset in ['cal', 'test']:
-        print(dataset)
         if 'ijbc' in dataset_name:
             fair_scores[dataset], ground_truth[dataset] = collect_pair_embeddings_ijbc(feature, db_fold[dataset], modelM)
         else:

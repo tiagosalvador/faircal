@@ -71,11 +71,10 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
 
     loss_fn = nn.CrossEntropyLoss()
 
-    print(f"STAGE 1")
     # Initialize 
     modelM = NeuralNetworkM().cuda()
     modelC = NeuralNetworkC(n_id).cuda()
-    optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-3)
+    optimizer_stage1 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-2)
 
     for epoch in tqdm(range(epochs_stage1)):
         if torch.cuda.is_available():
@@ -118,7 +117,6 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
             for k in range(1,K_race):
                 optimizer_stage2_parameters_race += list(modelE_race[k].parameters())
             optimizer_stage2_race = optim.Adam(optimizer_stage2_parameters_race, lr=1e-3)
-            print(f"STAGE 2")
             for epoch in tqdm(range(epochs_stage2)):
                 loss_list_gender = []
                 loss_list_race = []
@@ -151,7 +149,6 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
 
         ## STAGE 3 ##
         optimizer_stage3 = optim.Adam(list(modelM.parameters())+list(modelC.parameters()), lr=1e-4)
-        #     print(f"STAGE 3")
         for epoch in range(epochs_stage3):
             loss_list = []
             for batch, (X, y_id, y_subgroup_gender, y_subgroup_race, y_subgroup) in enumerate(train_dataloader):
@@ -192,7 +189,6 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
         k_race = i % K_race
         optimizer_stage2_gender = optim.Adam(modelE_gender[k_gender].parameters(), lr=1e-4)
         optimizer_stage2_race = optim.Adam(modelE_race[k_race].parameters(), lr=1e-4)
-    #     print(f"STAGE 4")
         for epoch in range(epochs_stage4):
             modelM.eval()
             modelE_gender[k_gender].eval()
@@ -226,7 +222,6 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
                     correct_race += (prob.argmax(1) == y_subgroup_race).type(torch.float).sum().item()
             test_loss_race /= size
             correct_race /= size
-    #         print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f}")
 
             modelM.train()
             modelE_gender[k_gender].train()
@@ -255,7 +250,6 @@ def multi_pass(dataset_name, feature, db_fold, nbins, calibration_method):
     fair_scores = {}
     ground_truth = {}
     for dataset in ['cal', 'test']:
-        print(dataset)
         if 'ijbc' in dataset_name:
             fair_scores[dataset], ground_truth[dataset] = collect_pair_embeddings_ijbc(feature, db_fold[dataset], modelM)
         else:
