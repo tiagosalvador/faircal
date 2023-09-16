@@ -4,12 +4,6 @@ Code for the paper *FairCal: Fair Calibration for Face Verification*.
 
 ## Requirements
 
-To install requirements:
-
-```setup
-conda install --file requirements.txt
-```
-
 The code assumes that the embeddings from the pre-trained models and the pairs and cosine similarities for both the RFW and BFW are contained in the folder data. Due to the licenses of the datasets, these cannot be shared. The following functions will need to be updated depending on how the embeddings and the pairs are saved:
 
 - collect_embeddings_rfw, collect_embeddings_bfw, collect_embeddings_ijbc, collect_miscellania_rfw, collect_miscellania_bfw, collect_miscellania_ijbc in approaches.py
